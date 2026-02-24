@@ -30,6 +30,28 @@ export const resolvers = {
       links.push(link);
       return link;
     },
+
+    update: (
+      parent: any,
+      args: { id: string; url?: string; description?: string }
+    ) => {
+      const index = links.findIndex((link) => link.id === args.id);
+      if (index === -1) return null;
+
+      if (args.url !== undefined) links[index].url = args.url;
+      if (args.description !== undefined)
+        links[index].description = args.description;
+
+      return links[index];
+    },
+
+    delete: (parent: any, args: { id: string }) => {
+      const index = links.findIndex((link) => link.id === args.id);
+      if (index === -1) return null;
+
+      const [deleted] = links.splice(index, 1);
+      return deleted;
+    },
   },
 };
 
