@@ -3,15 +3,36 @@ import { startStandaloneServer } from "@apollo/server/standalone";
 
 const typeDefs = `#graphql
   type Query {
-    message: String!
+    info: String!
+    feed: [Link]!
+  }
+
+  type Link {
+  id : ID!
+  description : String!
+  url: String!
   }
 `;
 
 const resolvers = {
   Query: {
-    message: () => "Hello World!",
+    info: () => "HackerNews",
+    feed: () => links,
   },
 };
+
+let links = [
+  {
+    id: "link1",
+    description: "test1",
+    url: "test1",
+  },
+  {
+    id: "link2",
+    description: "test2",
+    url: "test2",
+  },
+];
 
 const server = new ApolloServer({
   typeDefs,
