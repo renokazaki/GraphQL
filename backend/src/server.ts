@@ -3,11 +3,12 @@ import { startStandaloneServer } from "@apollo/server/standalone";
 import * as fs from "fs";
 import * as path from "path";
 import { resolvers } from "./resolver";
+import { prisma } from "./lib/prisma";
 
 const server = new ApolloServer({
   typeDefs: fs.readFileSync(
     path.join(__dirname, "schema", "schema.graphql"),
-    "utf-8"
+    "utf-8",
   ),
   resolvers,
 });
@@ -15,6 +16,7 @@ const server = new ApolloServer({
 async function main() {
   const { url } = await startStandaloneServer(server, {
     listen: { port: 4001 },
+    context: async () => ({ prisma }),
   });
   console.log(`Server ready at ${url}`);
 }

@@ -1,57 +1,63 @@
-const links = [
-  {
-    id: "link1",
-    description: "test1",
-    url: "test1",
-  },
-  {
-    id: "link2",
-    description: "test2",
-    url: "test2",
-  },
-];
+import { PrismaClient } from "generated/prisma/client";
+
+type Context = {
+  prisma: PrismaClient;
+};
+
+function parseId(id: string): number | null {
+  const parsed = parseInt(id, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
 
 export const resolvers = {
   Query: {
     info: () => "HackerNews",
-    feed: () => links,
+    feed: async (_: unknown, __: unknown, context: Context) => {
+      return context.prisma.link.findMany({ orderBy: { id: "asc" } });
+    },
   },
 
   Mutation: {
-    post: (parent: any, args: { description: string; url: string }) => {
-      const idCount = links.length;
-
-      const link = {
-        id: `link-${idCount}`,
-        description: args.description,
-        url: args.url,
-      };
-
-      links.push(link);
-      return link;
-    },
-
-    update: (
-      parent: any,
-      args: { id: string; url?: string; description?: string }
+    post: async (
+      _: unknown,
+      args: { description: string; url: string },
+      context: Context,
     ) => {
-      const index = links.findIndex((link) => link.id === args.id);
-      if (index === -1) return null;
-
-      if (args.url !== undefined) links[index].url = args.url;
-      if (args.description !== undefined)
-        links[index].description = args.description;
-
-      return links[index];
+      return context.prisma.link.create({
+        data: {
+          description: args.description,
+          url: args.url,
+        },
+      });
     },
 
-    delete: (parent: any, args: { id: string }) => {
-      const index = links.findIndex((link) => link.id === args.id);
-      if (index === -1) return null;
+    update: async (
+      _: unknown,
+      args: { id: string; url?: string; description?: string },
+      context: Context,
+    ) => {
+      const id = parseId(args.id);
+      if (id === null) return null;
 
-      const [deleted] = links.splice(index, 1);
-      return deleted;
+      const existing = await context.prisma.link.findUnique({ where: { id } });
+      if (!existing) return null;
+
+      const data: { url?: string; description?: string } = {};
+      if (args.url !== undefined) data.url = args.url;
+      if (args.description !== undefined) data.description = args.description;
+
+      return context.prisma.link.update({ where: { id }, data });
+    },
+
+    delete: async (_: unknown, args: { id: string }, context: Context) => {
+      const id = parseId(args.id);
+      if (id === null) return null;
+
+      const link = await context.prisma.link.findUnique({ where: { id } });
+      if (!link) return null;
+
+      await context.prisma.link.delete({ where: { id } });
+      return link;
     },
   },
 };
-
